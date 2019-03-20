@@ -63,14 +63,6 @@ def login():
     return render_template('login.html', form=form, error=error)
 
 
-@app.route('/logout/')
-def logout():
-    session.pop('logged_in', None)
-    session.pop('user_id', None)
-    flash('Goodbye!')
-    return redirect(url_for('login'))
-
-
 def login_required(test):
     @wraps(test)
     def wrap(*args, **kwargs):
@@ -79,9 +71,16 @@ def login_required(test):
         else:
             flash('You need to login first.')
         return redirect(url_for('login'))
-
     return wrap
 
+
+@app.route('/logout/')
+@login_required
+def logout():
+    session.pop('logged_in', None)
+    session.pop('user_id', None)
+    flash('Goodbye!')
+    return redirect(url_for('login'))
 
 @app.route('/tasks/')
 @login_required
