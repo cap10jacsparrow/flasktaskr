@@ -146,7 +146,6 @@ class AllTests(unittest.TestCase):
         ), follow_redirects=True)
         self.assertIn(b'This field is required.', response.data)
 
-
     def test_users_can_complete_tasks(self):
         self.create_user('Michael', 'michael@realpython.com', 'python')
         self.login('Michael', 'python')
@@ -176,6 +175,37 @@ class AllTests(unittest.TestCase):
         self.assertNotIn(
             b'The task is complete. Nice.', response.data
         )
+        self.assertIn(
+            b'You can only update tasks that belong to you.', response.data
+        )
+
+    def test_users_cannot_delete_tasks_that_are_not_created_by_them(self):
+        self.create_user('Michael', 'michael@realpython.com', 'python')
+        self.login('Michael', 'python')
+        self.app.get('tasks/', follow_redirects=True)
+        self.create_task()
+        self.logout()
+        self.create_user('Fletcher', 'fletcher@realpython.com', 'python101')
+        self.login('Fletcher', 'python101')
+        self.app.get('tasks/', follow_redirects=True)
+        response = self.app.get("delete/1/", follow_redirects=True)
+        self.assertIn(
+            b'You can only delete tasks that belong to you.', response.data
+        )
+
+    def test_default_user_role(self):
+        db.session.add(
+            User(
+                "Johnny",
+                "john@doe.com",
+                "johnny"
+            )
+        )
+        db.session.commit()
+        users = db.session.query(User).all()
+        print(users)
+        for user in users:
+            self.assertEquals(user.role, 'user')
 
 
 if __name__ == "__main__":
